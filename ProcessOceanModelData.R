@@ -69,41 +69,22 @@ raw <- data.frame(raw, Longitude = elm$X1, Latitude = elm$X2)
 # calculate and rename
 cur <- raw %>%
   mutate(
-    # Range of RMS current speed between seasons
-    rmsMin=pmin(spring.RMSspeed, summer.RMSspeed, fall.RMSspeed),
-    rmsMax=pmax(spring.RMSspeed, summer.RMSspeed, fall.RMSspeed),
-    rng.RMSspeed=rmsMax-rmsMin,
-    # maximum current speeds for each season
-    uSprMax=pmax(abs(spring.umax), abs(spring.umin)),
-    vSprMax=pmax(abs(spring.vmax), abs(spring.vmin)),
-    uSumMax=pmax(abs(summer.umax), abs(summer.umin)),
-    vSumMax=pmax(abs(summer.vmax), abs(summer.vmin)),
-    uFalMax=pmax(abs(fall.umax), abs(fall.umin)),
-    vFalMax=pmax(abs(fall.vmax), abs(fall.vmin)),
-    spring.MaxSpeed=sqrt(uSprMax^2 + vSprMax^2),
-    summer.MaxSpeed=sqrt(uSumMax^2 + vSumMax^2),
-    fall.MaxSpeed=sqrt(uFalMax^2 + vFalMax^2),
-    # range of maximum current speeds between seasons
-    maxspeedMin=pmin(spring.MaxSpeed, summer.MaxSpeed, fall.MaxSpeed),
-    maxspeedMax=pmax(spring.MaxSpeed, summer.MaxSpeed, fall.MaxSpeed),
-    rng.MaxSpeed=maxspeedMax-maxspeedMin,
-    # Range of shear stress between seasons
-    stressMin=pmin(spring.stress, summer.stress, fall.stress),
-    stressMax=pmax(spring.stress, summer.stress, fall.stress),
-    rng.Stress=stressMax-stressMin) %>%
+    # circulation speed for each season
+    spr.cur=sqrt(spring.umean^2 + spring.vmean^2),
+    sum.cur=sqrt(summer.umean^2 + summer.vmean^2),
+    fal.cur=sqrt(fall.umean^2 + fall.vmean^2)) %>%
   #select
   select( Longitude, Latitude,
-          spring.RMSspeed, rng.RMSspeed, 
-          spring.MaxSpeed, rng.MaxSpeed,
-          spring.stress, rng.Stress) %>%
-  rename( spr.MnSp = spring.RMSspeed, rng.MnSp = rng.RMSspeed, 
-          spr.MaxSp = spring.MaxSpeed, rng.MaxSp = rng.MaxSpeed,
-          spr.Stress = spring.stress) %>%
+          spr.cur, sum.cur, fal.cur, 
+          spring.RMSspeed, summer.RMSspeed, fall.RMSspeed, 
+          spring.stress, summer.stress, fall.stress) %>%
+  rename( spr.rms = spring.RMSspeed, sum.rms = summer.RMSspeed, fal.rms = fall.RMSspeed,
+          spr.stres = spring.stress, sum.stres = summer.stress, fal.stres = fall.stress) %>%
   data.frame( )
 
 # plot and check for correlation
-#plot(cur[,3:8])
-#cor(cur[,3:8])
+#plot(cur[,3:11])
+#cor(cur[,3:11])
 
 
 
@@ -115,7 +96,7 @@ cur <- raw %>%
 saltemp_files <- list.files(path = "Data/Raw", pattern = "temp_sal", full.names = TRUE)
 raw <- data.frame(ID = 1:118089)
 for( i in saltemp_files){
-  tmp <- read_table(file=i, col_names = FALSE)
+  tmp <- read.table(file=i, header=F, sep=" ")
   season <- sub(".*/","",i)
   season <- sub("-.*","",season)
   names(tmp) <- c("Longitude", "Latitude", "Temp", "Sal")
@@ -126,16 +107,11 @@ for( i in saltemp_files){
 # calculate and rename
 saltemp <- raw %>%
   rename( Longitude=fall.Longitude, Latitude=fall.Latitude ) %>%
-  mutate(
-    salMin=pmin(spring.Sal, summer.Sal, fall.Sal),
-    salMax=pmax(spring.Sal, summer.Sal, fall.Sal),
-    rng.Sal=salMax-salMin,
-    tempMin=pmin(spring.Temp, summer.Temp, fall.Temp),
-    tempMax=pmax(spring.Temp, summer.Temp, fall.Temp),
-    rng.Temp=tempMax-tempMin ) %>%
   select( Longitude, Latitude,
-          spring.Sal, rng.Sal, spring.Temp, rng.Temp ) %>%
-  rename( spr.Sal = spring.Sal, spr.Temp = spring.Temp ) %>%
+          spring.Sal, summer.Sal, fall.Sal,
+          spring.Temp, summer.Temp, fall.Temp ) %>%
+  rename( spr.sal = spring.Sal, sum.sal = summer.Sal, fal.sal = fall.Sal,
+          spr.temp = spring.Temp, sum.temp = summer.Temp, fal.temp = fall.Temp ) %>%
   data.frame( )
 
 
@@ -219,6 +195,8 @@ saltemp.table <- saltemp.melt %>%
 # add units
 saltemp.table$Units <- c("PSU",
                          "PSU",
+                         "PSU",
+                         "Celsius",
                          "Celsius",
                          "Celsius",
                          "Decimal degree",
@@ -226,9 +204,11 @@ saltemp.table$Units <- c("PSU",
 
 # add description
 saltemp.table$Description <- c("Mean spring salinity",
-                               "Range of mean salinity between seasons (Spring,Summer,Fall)",
+                               "Mean summer salinity",
+                               "Mean fall salinity",
                                "Mean spring temperature",
-                               "Range of mean temperature between seasons (Spring,Summer,Fall)",
+                               "Mean summer temperature",
+                               "Mean fall temperature",
                                "Longitude (WGS 84)",
                                "Latitude (WGS 84)")
 
@@ -247,7 +227,7 @@ saltemp.table
 header <- "This is a summary of the processed bottom salinity and temperature data which can be found in 'Data/Derived' directory
 \n"
 notes <- "
-Note: The script  (ProcessOceanModelData.R) can be adapted to output mean summer or fall salinity and temperature as well"
+Note: Created using  ProcessOceanModelData.R"
 cat(header, file="Documentation/SalTemp_Summary.txt")
 write.table(saltemp.table, file="Documentation/SalTemp_Summary.txt", append=TRUE,
             quote = FALSE, sep = "\t", row.name = FALSE)
@@ -281,21 +261,26 @@ cur.table$Units <- c("m/s",
                      "m/s",
                      "m/s",
                      "m/s",
+                     "m/s",
+                     "m/s",
+                     "log10(m2/s2)",
                      "log10(m2/s2)",
                      "log10(m2/s2)",
                      "Decimal degree",
                      "Decimal degree")
 
 # add description
-cur.table$Description <- c("Root mean square spring bottom current speed",
-                           "Range of Root mean square bottom current speed between seasons (Spring,Summer,Fall)",
-                           "Maximum spring bottom current speed",
-                           "Range of maximum bottom current speed between seasons (Spring,Summer,Fall)",
+cur.table$Description <- c("Mean circulation spring bottom current speed",
+                           "Mean circulation summer bottom current speed",
+                           "Mean circulation fall bottom current speed",
+                           "Root mean square spring bottom current speed",
+                           "Root mean square summer bottom current speed",
+                           "Root mean square fall bottom current speed",
                            "Mean spring shear stress",
-                           "Range of mean shear stress between seasons (Spring,Summer,Fall)",
-                           "Longitude (WGS 84)",
-                           "Latitude (WGS 84)")
-
+                           "Mean summer shear stress",
+                           "Mean fall shear stress",
+                               "Longitude (WGS 84)",
+                               "Latitude (WGS 84)")
 
 # set string length and alinement
 cur.table$variable <- sprintf("%-10s", as.character(cur.table$variable))
@@ -311,7 +296,7 @@ cur.table
 header <- "This is a summary of the processed bottom current data which can be found in 'Data/Derived' directory
 \n"
 notes <- "
-Note: The script (ProcessOceanModelData.R) can be adapted to output mean and max summer or fall current data as well"
+Note: Created using script ProcessOceanModelData.R"
 cat(header, file="Documentation/Currents_Summary.txt")
 write.table(cur.table, file="Documentation/Currents_Summary.txt", append=TRUE,
             quote = FALSE, sep = "\t", row.name = FALSE)
