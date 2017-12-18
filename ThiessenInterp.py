@@ -47,7 +47,7 @@ for s in shp:
 
 	# Get Environmental variable name
 	desc = arcpy.Describe(s)
-	evname = desc.baseName
+	evname = desc.baseName 
 
 	# Local variables:
 	fc = "Data/Interp/"+evname+".gdb/"+evname+"_fc"
