@@ -1,3 +1,5 @@
+Contact
+--------
 Author:       Jessica Nephin    
 Affiliation:  IOS, Fisheries and Oceans Canada (DFO)    
 Group:        Marine Spatial Ecology & Analysis, Ecosystems Science Division    
@@ -19,7 +21,7 @@ Methods
 Current velocities (u and v) can be used to represent different components of the currents
 depending on the method of averaging. Root mean square of hourly velocities over a
 29 day period was used to resolve tidal current speed. To represent the general circulation
-component, speed was calculated from the mean hourly velocities over a 29 day period.
+component, speed was calculated from the mean of hourly velocities over a 29 day period.
 
 
 Data
