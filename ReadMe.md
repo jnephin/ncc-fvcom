@@ -18,7 +18,8 @@ cycle.
 
 Methods
 -------
-Current velocities (u and v) can be used to represent different components of the currents
+Current velocities (u and v) can be used to represent different components of the currents 
+
 depending on the method of averaging. Root mean square of hourly velocities over a
 29 day period was used to resolve tidal current speed. To represent the general circulation
 component, speed was calculated from the mean of hourly velocities over a 29 day period.
@@ -38,5 +39,7 @@ of each variable, including their range and units.
 
 Caveats
 -------
-Interpolated data extends past the model domain in several inlets, rivers and estuaries.
+1)  Interpolated data extends past the model domain in several inlets, rivers and estuaries.
 The interpolated data in those regions should be used with caution.
+2)  The model was tested and evaluated for the summer season only. Use Spring and Fall data with 
+caution.

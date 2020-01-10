@@ -20,7 +20,7 @@ arcpy.CheckOutExtension("Spatial")
 #os.chdir("E:/AbioticData/Ocean_Models/Pramod_NSB_FVCOM_2017")
 
 # Set local variables
-infeature = os.getcwd()+"/Data/Derived/Currents.shp"
+infeature = os.getcwd()+"/Data/Derived/SalTemp.shp"
 
 # Create a list of fields using the ListFields function
 fields = arcpy.ListFields(infeature,"","Double")
